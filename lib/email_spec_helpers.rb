@@ -46,7 +46,11 @@ module EmailSpec
     end
     
     def mailbox_for(email)
-      ActionMailer::Base.deliveries.select { |m| m.to.include?(email) }
+      ActionMailer::Base.deliveries.select { |m| m.to.include?(email) }.reverse
+    end
+    
+    def clear_mailbox_for(email)
+      ActionMailer::Base.deliveries.delete_if { |m| m.to.include?(email) }
     end
     
     def parse_email_for_link(mail, link_text)
