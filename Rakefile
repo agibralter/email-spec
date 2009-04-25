@@ -23,29 +23,28 @@ rescue LoadError
   puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
 end
 
-# Testing
-
-desc "Run the generator on the tests"
-task :generate do
-  current_dir = File.expand_path(File.dirname(__FILE__))
-  system "mkdir -p #{current_dir}/examples/rails_root/vendor/plugins/email_spec"
-  system "cp -R #{current_dir}/rails_generators #{current_dir}/examples/rails_root/vendor/plugins/email_spec"
-  system "cd #{current_dir}/examples/rails_root && ./script/generate email_spec"
+begin
+  require 'cucumber/rake/task'
+  Cucumber::Rake::Task.new(:features)
+rescue LoadError
+  task :features do
+    abort "Cucumber is not available. In order to run features, you must: sudo gem install cucumber"
+  end
 end
 
-task :migrate do
-	system("cd examples/rails_root/ && rake db:test:prepare")
+require 'spec/rake/spectask'
+Spec::Rake::SpecTask.new(:spec) do |spec|
+  spec.libs << 'lib' << 'spec'
+  spec.spec_files = FileList['spec/**/*_spec.rb']
 end
 
-task :features => :generate do
-  system("cucumber examples/rails_root/")
-  puts "4 steps should fail.\n\n"
+namespace :example_app do
+  Spec::Rake::SpecTask.new(:spec) do |spec|
+    desc "Specs for Example app"
+    spec.libs << 'lib' << 'spec'
+    spec.spec_files = FileList['examples/rails_root/spec/**/*_spec.rb']
+  end
 end
 
-task :specs do
-  system("spec examples/rails_root -c --format nested")
-  system("spec spec -c --format nested")
-end
-
-task :default => [:migrate, :features, :specs]
+task :default => [:features, :spec, 'example_app:spec']
 
